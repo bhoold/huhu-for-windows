@@ -5,10 +5,11 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace huhu_for_windows
+namespace Huhu
 {
     public partial class MainForm : Form
     {
@@ -25,7 +26,7 @@ namespace huhu_for_windows
             string port = textBox_Port.Text.Trim().ToString();
             string nickname = textBox_Nickname.Text.Trim().ToString();
 
-            if(string.IsNullOrEmpty(nickname))
+            if (string.IsNullOrEmpty(nickname))
             {
                 nickname = Utility.GetIPAddress();
                 textBox_Nickname.Text = nickname;
@@ -51,30 +52,119 @@ namespace huhu_for_windows
                 return;
             }
 
-            if(client == null)
+            if (null != client)
             {
-                client = new SocketClient(server, port);
-                if(!client.IsConnected)
-                {
-                    richTextBox_Messages.AppendText("连接失败\r\n");
-                    return;
-                }
-                else
-                {
-                    richTextBox_Messages.AppendText("连接成功\r\n");
-                }
+                client.Close();
+                client = null;
             }
 
-            string msg = client.Send("{login:$nickname}");
-            if (string.IsNullOrEmpty(msg))
-            {
-                richTextBox_Messages.AppendText("登录失败\r\n");
-            }
-            else
-            {
-                richTextBox_Messages.AppendText("登录成功\r\n");
-            }
+            button_Connect.Enabled = false;
 
+            Thread thread = new Thread(() =>
+            {
+                //Console.WriteLine("当前线程ID = " + Thread.CurrentThread.ManagedThreadId); // 是子线程
+
+                bool IsExit = false;
+                bool IsRunning = false;
+                int step = 1;
+                while (!IsExit)
+                {
+                    if (!IsRunning)
+                    {
+                        switch (step)
+                        {
+                            case 1:
+                                IsRunning = true;
+                                this.BeginInvoke(new Action(delegate ()
+                                {
+                                    richTextBox_Messages.AppendText("正在连接\r\n");
+                                }));
+                                client = new SocketClient(server, port);
+                                this.BeginInvoke(new Action(delegate ()
+                                {
+                                    if (!client.IsConnected)
+                                    {
+                                        button_Connect.Enabled = true;
+                                        richTextBox_Messages.AppendText("连接失败\r\n");
+                                        IsExit = true;
+                                    }
+                                    else
+                                    {
+                                        button_Close.Enabled = true;
+                                        richTextBox_Messages.AppendText("连接成功\r\n");
+                                        step = 2;
+                                    }
+                                    IsRunning = false;
+                                }));
+                                break;
+
+                            case 2:
+                                IsRunning = true;
+                                this.BeginInvoke(new Action(delegate ()
+                                {
+                                    richTextBox_Messages.AppendText("正在登录\r\n");
+                                }));
+                                int msgLen = client.Send("{login:nickname}");
+                                Console.WriteLine("登录发送 {0} bytes.", msgLen);
+                                client.GetAsyn();
+                                /*
+                                this.BeginInvoke(new Action(delegate ()
+                                {
+                                    if (string.IsNullOrEmpty(msg))
+                                    {
+                                        richTextBox_Messages.AppendText("登录失败\r\n");
+                                        IsExit = true;
+                                    }
+                                    else
+                                    {
+                                        richTextBox_Messages.AppendText("登录成功\r\n");
+                                        step = 3;
+                                    }
+                                    IsRunning = false;
+                                }));*/
+                                break;
+                        }
+                    }
+                }
+            })
+            {
+                IsBackground = true
+            };
+            thread.Start();
+
+            Thread receThread = new Thread(() =>
+            {
+                bool IsRunning = true;
+                while (IsRunning)
+                {
+                    try
+                    {
+                        if(null == client)
+                        {
+                            continue;
+                        }
+                        Console.WriteLine(5555555);
+                        byte[] buffer = new byte[1024 * 1024 * 3];
+                        //实际接收到的有效字节数
+                        int len = client.Get(buffer); Console.WriteLine(444);
+                        if (len == 0)
+                        {
+                            continue;
+                        }
+                        string str = Encoding.UTF8.GetString(buffer, 0, len);
+                        Console.WriteLine(str);
+                        //ShowMsg(socketSend.RemoteEndPoint + ":" + str);
+                    }
+                    catch { }
+                }
+            })
+            {
+                IsBackground = true
+            };
+            //receThread.Start();
+
+
+            
         }
 
         private void button_Close_Click(object sender, EventArgs e)
@@ -99,8 +189,8 @@ namespace huhu_for_windows
                 return;
             }
 
-            string recvmsg = client.Send(msg);
-            if (string.IsNullOrEmpty(recvmsg))
+            int recvmsg = client.Send(msg);
+            if (recvmsg > 0)
             {
                 richTextBox_Chat.Clear();
             }

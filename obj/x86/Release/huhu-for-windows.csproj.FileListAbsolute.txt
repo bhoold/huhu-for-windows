@@ -1,0 +1,9 @@
+D:\Code\github\huhu-for-windows\bin\x86\Release\huhu.exe.config
+D:\Code\github\huhu-for-windows\bin\x86\Release\huhu.exe
+D:\Code\github\huhu-for-windows\bin\x86\Release\huhu.pdb
+D:\Code\github\huhu-for-windows\obj\x86\Release\Huhu.MainForm.resources
+D:\Code\github\huhu-for-windows\obj\x86\Release\Huhu.Properties.Resources.resources
+D:\Code\github\huhu-for-windows\obj\x86\Release\huhu-for-windows.csproj.GenerateResource.cache
+D:\Code\github\huhu-for-windows\obj\x86\Release\huhu-for-windows.csproj.CoreCompileInputs.cache
+D:\Code\github\huhu-for-windows\obj\x86\Release\huhu.exe
+D:\Code\github\huhu-for-windows\obj\x86\Release\huhu.pdb

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace huhu_for_windows
+namespace Huhu
 {
     class SocketClient
     {
@@ -80,8 +80,17 @@ namespace huhu_for_windows
             IPAddress ip = IPAddress.Parse(server);
             endpoint = new IPEndPoint(ip, int.Parse(port));
 
-            clientSocket.Connect(endpoint);
-            if (clientSocket.Connected)
+            try
+            {
+                clientSocket.Connect(endpoint);
+            }
+            catch
+            {
+                clientSocket = null;
+            }
+
+
+            if (null != clientSocket && clientSocket.Connected)
             {
                 IsConnected = true;
             }
@@ -106,35 +115,60 @@ namespace huhu_for_windows
 
         }
 
-        public string Send(string message)
+        public int Send(string message)
         {
-            string page = "";
-            Byte[] bytesReceived = new Byte[256];
+            int len = 0;
 
             if (!IsConnected)
             {
-                return page;
+                return len;
             }
             try
             {
-                byte[] sendMsg = Encoding.UTF8.GetBytes(message);
-                clientSocket.Send(sendMsg, sendMsg.Length, 0);
+                //byte[] sendMsg = Encoding.UTF8.GetBytes(message);
+                //clientSocket.Send(sendMsg, sendMsg.Length, 0);
+                len = clientSocket.Send(Encoding.UTF8.GetBytes(message));
+                Console.WriteLine("Sent {0} bytes.", len);
 
-                int bytes = 0;
-                do
-                {
-                    bytes = clientSocket.Receive(bytesReceived, bytesReceived.Length, 0);
-                    page = page + Encoding.UTF8.GetString(bytesReceived, 0, bytes);
-                }
-                while (bytes > 0);
+                /*
+                byte[] bytes = new byte[256];
+                len = clientSocket.Receive(bytes);
+                Console.WriteLine("Receive %s \r\n", Encoding.UTF8.GetString(bytes));
+                */
             }
             catch
             {
 
             }
 
-            return page;
+            return len;
         }
+
+        public int Get(byte[] buffer)
+        {
+            int len = clientSocket.Receive(buffer);
+            return len;
+        }
+
+        public void GetAsyn()
+        {
+            byte[] buffer = new Byte[256];
+            int bytes = 0;
+            string page = "";
+            Console.WriteLine(11);
+            do
+            {
+                bytes = clientSocket.Receive(buffer, buffer.Length, 0);
+                Console.WriteLine("sdfsdf");
+                page = page + Encoding.ASCII.GetString(buffer, 0, bytes);
+            }
+            while (bytes > 0);
+            Console.WriteLine(222);
+            Console.WriteLine(page);
+        }
+
+
+
 
         public void RecMsg()
         {
@@ -162,10 +196,6 @@ namespace huhu_for_windows
             }
         }
 
-        public void callback()
-        {
-
-        }
 
         public bool Close()
         {

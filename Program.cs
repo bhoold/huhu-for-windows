@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace huhu_for_windows
+namespace Huhu
 {
     static class Program
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace huhu_for_windows
+namespace Huhu
 {
     class Utility
     {

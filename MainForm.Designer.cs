@@ -1,4 +1,4 @@
-﻿namespace huhu_for_windows
+﻿namespace Huhu
 {
     partial class MainForm
     {
@@ -158,6 +158,7 @@
             // 
             // button_Close
             // 
+            this.button_Close.Enabled = false;
             this.button_Close.Location = new System.Drawing.Point(599, 124);
             this.button_Close.Name = "button_Close";
             this.button_Close.Size = new System.Drawing.Size(75, 23);

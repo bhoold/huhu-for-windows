@@ -1,10 +1,10 @@
-D:\Code\github\huhu-for-windows\bin\Debug\huhu-for-windows.exe.config
-D:\Code\github\huhu-for-windows\bin\Debug\huhu-for-windows.exe
-D:\Code\github\huhu-for-windows\bin\Debug\huhu-for-windows.pdb
 D:\Code\github\huhu-for-windows\obj\Debug\huhu-for-windows.csprojAssemblyReference.cache
-D:\Code\github\huhu-for-windows\obj\Debug\huhu_for_windows.Properties.Resources.resources
 D:\Code\github\huhu-for-windows\obj\Debug\huhu-for-windows.csproj.GenerateResource.cache
 D:\Code\github\huhu-for-windows\obj\Debug\huhu-for-windows.csproj.CoreCompileInputs.cache
-D:\Code\github\huhu-for-windows\obj\Debug\huhu-for-windows.exe
-D:\Code\github\huhu-for-windows\obj\Debug\huhu-for-windows.pdb
-D:\Code\github\huhu-for-windows\obj\Debug\huhu_for_windows.MainForm.resources
+D:\Code\github\huhu-for-windows\bin\Debug\huhu.exe.config
+D:\Code\github\huhu-for-windows\bin\Debug\huhu.exe
+D:\Code\github\huhu-for-windows\bin\Debug\huhu.pdb
+D:\Code\github\huhu-for-windows\obj\Debug\Huhu.Properties.Resources.resources
+D:\Code\github\huhu-for-windows\obj\Debug\huhu.exe
+D:\Code\github\huhu-for-windows\obj\Debug\huhu.pdb
+D:\Code\github\huhu-for-windows\obj\Debug\Huhu.MainForm.resources
