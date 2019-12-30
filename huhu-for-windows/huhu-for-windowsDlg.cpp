@@ -164,17 +164,15 @@ void ChuhuforwindowsDlg::OnBnClickedButtonConnect()
 	// TODO: 在此添加控件通知处理程序代码
 
 
-	CString server;
-	CString port;
-	CString nickname;
+	//CString nickname;
 
 	GetDlgItem(IDC_EDIT_SERVER)->GetWindowTextW(server);
 	GetDlgItem(IDC_EDIT_PORT)->GetWindowTextW(port);
-	GetDlgItem(IDC_EDIT_NICKNAME)->GetWindowTextW(nickname);
+	//GetDlgItem(IDC_EDIT_NICKNAME)->GetWindowTextW(nickname);
 
 
 
-
+	/*
 	RECT rect1;
 	rect1.left = 20;  //左上角x坐标
 	rect1.top = 100;    //左上角y坐标
@@ -191,31 +189,42 @@ void ChuhuforwindowsDlg::OnBnClickedButtonConnect()
 	//创建第二个线程ThreadProc,相对优先级THREAD_PRIORITY_TIME_CRITICAL
 	//面对任何等级调整为15,面对REALTIME等级调整为32
 	AfxBeginThread((AFX_THREADPROC)ThreadProc, &rect2, THREAD_PRIORITY_TIME_CRITICAL);
+	*/
+	AfxBeginThread((AFX_THREADPROC)ThreadProc, this, THREAD_PRIORITY_IDLE);
+
+}
 
 
-	return;
+DWORD ChuhuforwindowsDlg::ThreadProc(LPVOID pParam)
+{
+
+	ChuhuforwindowsDlg *pDlg = (ChuhuforwindowsDlg *)pParam;
+
+	CString server;
+	CString port;
+
+	server = pDlg->server;
+	port = pDlg->port;
 
 
-
-
-
-
-
-	CSocket socket;
-	if (!socket.Create()) {
-		CString strError;
-		/*
-		char szMsg[1024] = { 0 };
-		sprintf(szMsg, "create faild: %d", socket.GetLastError());
-		strError = szMsg;
-		*/
-		strError.Format(_T("socket create faild: %d"), socket.GetLastError());
-		MessageBox(strError);
-		return;
+	if (!pDlg->isCreated) {
+		if (!pDlg->socket.Create()) {
+			CString strError;
+			strError.Format(_T("socket create faild: %d"), pDlg->socket.GetLastError());
+			//::MessageBox(pDlg->m_hWnd, strError, _T("标题"), 0);
+			::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strError);
+			return 0;
+		}
+		else {
+			pDlg->isCreated = true;
+		}
 	}
 
+
+	::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_CONNECT), FALSE);
+
 	int nPort = _ttoi(port);
-	if (socket.Connect(server, nPort)) {
+	if (pDlg->socket.Connect(server, nPort)) {
 		TCHAR szRecValue[1024] = { 0 };
 
 		//发送内容给服务器
@@ -225,51 +234,77 @@ void ChuhuforwindowsDlg::OnBnClickedButtonConnect()
 		//char szMsg[1024] = { 0 };
 		//sprintf(szMsg, "hello ni %s", 2);
 		//socket.Send(szMsg, 1024);
-		DWORD l = strText.GetLength();
+
 		DWORD len = strText.GetLength() * sizeof(TCHAR);
-		socket.Send(strText, len);
+		pDlg->socket.Send(strText, len);
 
 		//接收服务器发送回来的内容(该方法会阻塞, 在此等待有内容接收到才继续向下执行)
-		//memset(szRecValue, 0, 1024);
-		socket.Receive((void *)szRecValue, 1024);
+		pDlg->socket.Receive((void *)szRecValue, 1024);
 		strRece.Format(_T("%s"), szRecValue);
-		MessageBox(strRece);
+		::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strRece);
 	}
 	else {
 		CString strError;
-		strError.Format(_T("socket create faild: %d"), socket.GetLastError());
-		MessageBox(strError);
+		strError.Format(_T("socket connect faild: %d"), pDlg->socket.GetLastError());
+		::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strError);
 	}
-	socket.Close();
+	pDlg->socket.Close();
+
+
+	::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_CONNECT), TRUE);
+
+
+
+	
+		
+
+
+	::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_EDIT_SERVER), _T("Hello World"));
+	Sleep(1000);
+	::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_EDIT_PORT), _T("Hello Android"));
+	Sleep(1000);
+
+	return 0;
 }
 
 
-DWORD ChuhuforwindowsDlg::ThreadProc(LPVOID pParam)
+
+
+
+
+
+CString ChuhuforwindowsDlg::UTF8AndUnicode_Convert(CString &strSource, UINT nSourceCodePage, UINT nTargetCodePage)
 {
+	CString        strTarget;
 	/*
-	CDC* pdc;
-	//将传入的参数转为RECT*
-	RECT* rect = (RECT*)pParam;
-	//得到设备句柄
-	pdc = AfxGetApp()->m_pMainWnd->GetDC();
-	//设置画刷
-	CBrush brush(HS_VERTICAL, RGB(0, 255, 0));
-	//选入到设备中
-	CBrush* oldbrush = pdc->SelectObject(&brush);
-	int n = 0;
-	while (n++ <= 2000)
-	{
-		pdc->Rectangle(rect->left, rect->top, rect->right + n, rect->bottom);
-		Sleep(1);
-	}
-	pdc->SelectObject(oldbrush);
-	pdc->ReleaseOutputDC();
+	wchar_t        *pWideBuf;
+	int            nWideBufLen;
+
+	char           *pMultiBuf;
+	int            nMiltiBufLen;
+
+	int            nSourceLen;
+
+	nSourceLen = strSource.GetLength();
+	nWideBufLen = MultiByteToWideChar(nSourceCodePage, 0, strSource, -1, NULL, 0);
+
+	pWideBuf = new wchar_t[nWideBufLen + 1];
+	memset(pWideBuf, 0, (nWideBufLen + 1) * sizeof(wchar_t));
+
+	MultiByteToWideChar(nSourceCodePage, 0, strSource, -1, (LPWSTR)pWideBuf, nWideBufLen);
+
+	pMultiBuf = NULL;
+	nMiltiBufLen = WideCharToMultiByte(nTargetCodePage, 0, (LPWSTR)pWideBuf, -1, (char *)pMultiBuf, 0, NULL, NULL);
+
+	pMultiBuf = new char[nMiltiBufLen + 1];
+	memset(pMultiBuf, 0, nMiltiBufLen + 1);
+
+	WideCharToMultiByte(nTargetCodePage, 0, (LPWSTR)pWideBuf, -1, (char *)pMultiBuf, nMiltiBufLen, NULL, NULL);
+
+	strTarget.Format(_T("%s"), pMultiBuf);
+
+	delete pWideBuf;
+	delete pMultiBuf;
 	*/
-	printf("Hello World!\n");
-
-
-
-
-
-	return 2;
+	return strTarget;
 }
