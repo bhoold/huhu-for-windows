@@ -7,6 +7,8 @@
 #include "huhu-for-windowsDlg.h"
 #include "afxdialogex.h"
 
+#include "CMyAsyncSocket.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -66,6 +68,7 @@ BEGIN_MESSAGE_MAP(ChuhuforwindowsDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &ChuhuforwindowsDlg::OnBnClickedButtonConnect)
 	ON_BN_CLICKED(IDC_BUTTON_SEND, &ChuhuforwindowsDlg::OnBnClickedButtonSend)
+	ON_MESSAGE(WM_MYASYNCSOCKET, &ChuhuforwindowsDlg::OnMyAsyncSocket)
 END_MESSAGE_MAP()
 
 
@@ -105,6 +108,7 @@ BOOL ChuhuforwindowsDlg::OnInitDialog()
 	GetDlgItem(IDC_EDIT_PORT)->SetWindowTextW(_T("9501"));
 	GetDlgItem(IDC_BUTTON_SEND)->EnableWindow(FALSE);
 
+	pSocketClient = new CMyAsyncSocket;
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -167,10 +171,42 @@ void ChuhuforwindowsDlg::OnBnClickedButtonConnect()
 
 	//CString nickname;
 
-	GetDlgItem(IDC_EDIT_SERVER)->GetWindowTextW(server);
-	GetDlgItem(IDC_EDIT_PORT)->GetWindowTextW(port);
+	//GetDlgItem(IDC_EDIT_SERVER)->GetWindowTextW(server);
+	//GetDlgItem(IDC_EDIT_PORT)->GetWindowTextW(port);
 	//GetDlgItem(IDC_EDIT_NICKNAME)->GetWindowTextW(nickname);
 
+
+
+
+	CString strServer;
+	CString strPort;
+	DWORD nPort;
+
+	GetDlgItem(IDC_EDIT_SERVER)->GetWindowTextW(strServer);
+	GetDlgItem(IDC_EDIT_PORT)->GetWindowTextW(strPort);
+
+	nPort = _ttoi(strPort);
+
+	pSocketClient->m_pWnd = this;
+	if (FALSE == pSocketClient->Create()) {
+		CString strError;
+		strError.Format(_T("创建链接失败，错误号: %d"), pSocketClient->GetLastError());
+		GetDlgItem(IDC_RICHEDIT2_CHAT)->SetWindowText(strError);
+		return;
+	}
+	
+	pSocketClient->Connect(strServer, nPort);
+
+
+	/*
+	if (FALSE == ) {
+		CString strError;
+		strError.Format(_T("连接服务器失败，错误号: %d"), pSocketClient->GetLastError());
+		GetDlgItem(IDC_RICHEDIT2_CHAT)->SetWindowText(strError);
+
+		//::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_CONNECT), TRUE);
+		return;
+	}*/
 
 
 	/*
@@ -191,7 +227,7 @@ void ChuhuforwindowsDlg::OnBnClickedButtonConnect()
 	//面对任何等级调整为15,面对REALTIME等级调整为32
 	AfxBeginThread((AFX_THREADPROC)ThreadProc, &rect2, THREAD_PRIORITY_TIME_CRITICAL);
 	*/
-	AfxBeginThread((AFX_THREADPROC)ThreadProc, this, THREAD_PRIORITY_IDLE);
+	//AfxBeginThread((AFX_THREADPROC)ThreadProc, this, THREAD_PRIORITY_IDLE);
 
 }
 
@@ -296,11 +332,8 @@ DWORD ChuhuforwindowsDlg::ThreadProc(LPVOID pParam)
 				pDlg->isLogin = true;
 			}
 
-
-			//Sleep(5000);
-
-
 		}
+		Sleep(0);
 	}
 
 	/*
@@ -364,4 +397,115 @@ void ChuhuforwindowsDlg::OnBnClickedButtonSend()
 	else {
 		MessageBox(_T("未连接"), _T("提示"));
 	}
+}
+
+
+
+afx_msg LRESULT ChuhuforwindowsDlg::OnMyAsyncSocket(WPARAM wParam, LPARAM lParam)
+{
+	CMyAsyncSocket* pSock = (CMyAsyncSocket*)wParam;
+	DWORD param = *((DWORD*)(lParam));
+	int recvLen;
+	const int BUF_SIZE = 1024;
+	char buf[BUF_SIZE];
+	switch (param)
+	{
+	case 1://connect
+		//pSock->Send(buf, BUF_SIZE-1);
+		break;
+	case 2://send
+	{
+		CString  m_sendBuffer = _T("它帝业");   //for async send
+		int      m_nBytesSent = 0;
+		int      m_nBytesBufferSize = m_sendBuffer.GetLength()*2;
+		while (m_nBytesSent < m_nBytesBufferSize)
+		{
+			int dwBytes;
+
+			if ((dwBytes = pSock->Send((LPCTSTR)m_sendBuffer + m_nBytesSent, m_nBytesBufferSize - m_nBytesSent)) == SOCKET_ERROR)
+			{
+				if (GetLastError() == WSAEWOULDBLOCK)
+				{
+					break;
+				}
+				else
+				{
+					TCHAR szError[256];
+					_stprintf_s(szError, _T("Server Socket failed to send: %d"),
+						GetLastError());
+					pSock->Close();
+					AfxMessageBox(szError);
+				}
+			}
+			else
+			{
+				m_nBytesSent += dwBytes;
+			}
+		}
+
+		if (m_nBytesSent == m_nBytesBufferSize)
+		{
+			m_nBytesSent = m_nBytesBufferSize = 0;
+			m_sendBuffer = _T("");
+		}
+	}
+		break;
+	case 3://receive
+	{
+		TCHAR szRecValue[1024] = { 0 };
+		CString strRece;
+
+		pSock->Receive((void *)szRecValue, 1024);
+
+		CTime tm; tm = CTime::GetCurrentTime();
+		strRece = tm.Format("%Y年%m月%d日 %X");
+		strRece.AppendFormat(_T("%s"), szRecValue);
+		GetDlgItem(IDC_RICHEDIT2_CHAT)->SetWindowText(strRece);
+
+
+		/*
+		CString  m_strRecv;
+
+		static int i = 0;
+
+		i++;
+
+		TCHAR buff[4096];
+		int nRead;
+		nRead = pSock->Receive(buff, 4096);
+
+		switch (nRead)
+		{
+		case 0:
+			pSock->Close();
+			break;
+		case SOCKET_ERROR:
+			if (GetLastError() != WSAEWOULDBLOCK)
+			{
+				AfxMessageBox(_T("Error occurred"));
+				pSock->Close();
+			}
+			break;
+		default:
+			buff[nRead] = _T('\0'); //terminate the string
+			CString szTemp(buff);
+			m_strRecv += szTemp; // m_strRecv is a CString declared
+								 // in CMyAsyncSocket
+			if (szTemp.CompareNoCase(_T("bye")) == 0)
+			{
+				pSock->ShutDown();
+			}
+			MessageBox(szTemp);
+		}*/
+	}
+		break;
+	case 4://close
+		break;
+		default:
+			break;
+	}
+	TCHAR szError[256];
+	_stprintf_s(szError, _T(": %d"), param);
+	MessageBox(szError);
+	return 0;
 }

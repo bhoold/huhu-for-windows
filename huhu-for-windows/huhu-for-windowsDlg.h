@@ -3,7 +3,9 @@
 //
 
 #pragma once
+#define WM_MYASYNCSOCKET WM_USER+1001
 
+#include "CMyAsyncSocket.h"
 
 // ChuhuforwindowsDlg 对话框
 class ChuhuforwindowsDlg : public CDialogEx
@@ -43,4 +45,7 @@ public:
 	CString port;
 	CString UTF8AndUnicode_Convert(CString &strSource, UINT nSourceCodePage, UINT nTargetCodePage);
 	afx_msg void OnBnClickedButtonSend();
+	CMyAsyncSocket *pSocketClient;
+protected:
+	afx_msg LRESULT OnMyAsyncSocket(WPARAM wParam, LPARAM lParam);
 };

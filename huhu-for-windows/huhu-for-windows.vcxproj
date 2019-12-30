@@ -183,6 +183,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CMyAsyncSocket.h" />
     <ClInclude Include="huhu-for-windows.h" />
     <ClInclude Include="huhu-for-windowsDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -190,6 +191,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CMyAsyncSocket.cpp" />
     <ClCompile Include="huhu-for-windows.cpp" />
     <ClCompile Include="huhu-for-windowsDlg.cpp" />
     <ClCompile Include="stdafx.cpp">

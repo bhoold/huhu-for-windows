@@ -35,6 +35,7 @@
 
 
 #include <afxsock.h>            // MFC 套接字扩展
+#include <afxsock.h>
 
 
 
