@@ -35,9 +35,12 @@ public:
 	afx_msg void OnBnClickedButtonConnect();
 	static DWORD WINAPI ThreadProc(LPVOID pParam);
 
-	bool isCreated = false;
+	bool isConnect = false;
+	bool isLogin = false;
+	bool isSend = false;
 	CSocket socket;
 	CString server;
 	CString port;
 	CString UTF8AndUnicode_Convert(CString &strSource, UINT nSourceCodePage, UINT nTargetCodePage);
+	afx_msg void OnBnClickedButtonSend();
 };

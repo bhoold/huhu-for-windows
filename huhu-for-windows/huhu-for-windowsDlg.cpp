@@ -65,6 +65,7 @@ BEGIN_MESSAGE_MAP(ChuhuforwindowsDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &ChuhuforwindowsDlg::OnBnClickedButtonConnect)
+	ON_BN_CLICKED(IDC_BUTTON_SEND, &ChuhuforwindowsDlg::OnBnClickedButtonSend)
 END_MESSAGE_MAP()
 
 
@@ -102,7 +103,7 @@ BOOL ChuhuforwindowsDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	GetDlgItem(IDC_EDIT_SERVER)->SetWindowTextW(_T("172.18.18.210"));
 	GetDlgItem(IDC_EDIT_PORT)->SetWindowTextW(_T("9501"));
-
+	GetDlgItem(IDC_BUTTON_SEND)->EnableWindow(FALSE);
 
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -206,8 +207,8 @@ DWORD ChuhuforwindowsDlg::ThreadProc(LPVOID pParam)
 	server = pDlg->server;
 	port = pDlg->port;
 
-
-	if (!pDlg->isCreated) {
+	if (!pDlg->isConnect) {
+		AfxSocketInit();
 		if (!pDlg->socket.Create()) {
 			CString strError;
 			strError.Format(_T("socket create faild: %d"), pDlg->socket.GetLastError());
@@ -215,55 +216,99 @@ DWORD ChuhuforwindowsDlg::ThreadProc(LPVOID pParam)
 			::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strError);
 			return 0;
 		}
+
+		::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_CONNECT), FALSE);
+
+		int nPort = _ttoi(port);
+		if (pDlg->socket.Connect(server, nPort)) {
+			pDlg->isConnect = true;
+		}
 		else {
-			pDlg->isCreated = true;
+			CString strError;
+			strError.Format(_T("socket connect faild: %d"), pDlg->socket.GetLastError());
+			::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strError);
+			::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_CONNECT), TRUE);
+		}
+		//pDlg->socket.Close();
+	}
+
+
+
+	while (true)
+	{
+		if (pDlg->isConnect) {
+			if (pDlg->isLogin) {
+				if (pDlg->isSend) {
+					CString strText;
+					CString strMsg;
+
+					pDlg->GetDlgItem(IDC_EDIT_MESSAGE)->GetWindowText(strMsg);
+					strText.Format(_T("{message:%s}"), strMsg);
+					DWORD len = strText.GetLength() * sizeof(TCHAR);
+					pDlg->socket.Send(strText, len);
+
+					pDlg->GetDlgItem(IDC_EDIT_MESSAGE)->SetWindowText(_T(""));
+
+
+
+					TCHAR szRecValue[1024] = { 0 };
+					CString strRece;
+
+					pDlg->socket.Receive((void *)szRecValue, 1024);
+
+					CTime tm; tm = CTime::GetCurrentTime();
+					strRece = tm.Format("%Y年%m月%d日 %X");
+					strRece.AppendFormat(_T("%s"), szRecValue);
+					::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strRece);
+
+
+					pDlg->isSend = false;
+				}
+			}
+			else {
+				CString strText;
+				CString strName;
+
+				pDlg->GetDlgItem(IDC_EDIT_NICKNAME)->GetWindowText(strName);
+				strText.Format(_T("{login:%s}"), strName);
+				DWORD len = strText.GetLength() * sizeof(TCHAR);
+				pDlg->socket.Send(strText, len);
+
+
+
+				TCHAR szRecValue[1024] = { 0 };
+				CString strRece;
+
+				pDlg->socket.Receive((void *)szRecValue, 1024);
+
+				CTime tm; tm = CTime::GetCurrentTime();
+				strRece = tm.Format("%Y年%m月%d日 %X");
+				strRece.AppendFormat(_T("%s"), szRecValue);
+				::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strRece);
+
+				/*
+				SETTEXTEX stex = { ST_NEWCHARS, 1200 };
+				::SendMessage(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), EM_SETTEXTEX, (WPARAM)&stex, (LPARAM)_T("sdf"));
+				*/
+
+				::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_SEND), TRUE);
+
+				pDlg->isLogin = true;
+			}
+
+
+			//Sleep(5000);
+
+
 		}
 	}
 
-
-	::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_CONNECT), FALSE);
-
-	int nPort = _ttoi(port);
-	if (pDlg->socket.Connect(server, nPort)) {
-		TCHAR szRecValue[1024] = { 0 };
-
-		//发送内容给服务器
-		CString strText = _T("you我sdfsd");
-		CString strRece;
-
-		//char szMsg[1024] = { 0 };
-		//sprintf(szMsg, "hello ni %s", 2);
-		//socket.Send(szMsg, 1024);
-
-		DWORD len = strText.GetLength() * sizeof(TCHAR);
-		pDlg->socket.Send(strText, len);
-
-		//接收服务器发送回来的内容(该方法会阻塞, 在此等待有内容接收到才继续向下执行)
-		pDlg->socket.Receive((void *)szRecValue, 1024);
-		strRece.Format(_T("%s"), szRecValue);
-		::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strRece);
-	}
-	else {
-		CString strError;
-		strError.Format(_T("socket connect faild: %d"), pDlg->socket.GetLastError());
-		::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_RICHEDIT2_CHAT), strError);
-	}
-	pDlg->socket.Close();
-
-
-	::EnableWindow(::GetDlgItem(pDlg->m_hWnd, IDC_BUTTON_CONNECT), TRUE);
-
-
-
-	
-		
-
-
+	/*
 	::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_EDIT_SERVER), _T("Hello World"));
 	Sleep(1000);
 	::SetWindowText(::GetDlgItem(pDlg->m_hWnd, IDC_EDIT_PORT), _T("Hello Android"));
 	Sleep(1000);
-
+	*/
 	return 0;
 }
 
@@ -307,4 +352,16 @@ CString ChuhuforwindowsDlg::UTF8AndUnicode_Convert(CString &strSource, UINT nSou
 	delete pMultiBuf;
 	*/
 	return strTarget;
+}
+
+void ChuhuforwindowsDlg::OnBnClickedButtonSend()
+{
+	// TODO: 在此添加控件通知处理程序代码
+
+	if (isLogin) {
+		isSend = true;
+	}
+	else {
+		MessageBox(_T("未连接"), _T("提示"));
+	}
 }
