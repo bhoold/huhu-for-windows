@@ -39,6 +39,20 @@ ChuhuApp theApp;
 
 BOOL ChuhuApp::InitInstance()
 {
+	/*
+	//利用互斥实现单例进程模式
+	HANDLE   hMutex = ::CreateMutex(NULL, TRUE, _T("huhuapp"));
+	if (hMutex != NULL)
+	{
+		if (GetLastError() == ERROR_ALREADY_EXISTS)
+		{
+			MessageBox(NULL, _T("程序已经运行"), _T("提示"), MB_OK);
+			CloseHandle(hMutex);
+			return   FALSE;
+		}
+	}
+	*/
+
 	// 如果一个运行在 Windows XP 上的应用程序清单指定要
 	// 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
 	//则需要 InitCommonControlsEx()。  否则，将无法创建窗口。
@@ -60,6 +74,7 @@ BOOL ChuhuApp::InitInstance()
 
 	AfxEnableControlContainer();
 
+	// 初始化富文本框
 	AfxInitRichEdit2();
 
 	// 创建 shell 管理器，以防对话框包含

@@ -23,8 +23,8 @@ CMyAsyncSocket::~CMyAsyncSocket()
 void CMyAsyncSocket::OnReceive(int nErrorCode)
 {
 	// TODO: 在此添加专用代码和/或调用基类
-
-	DWORD param = 3;
+	printf("CMyAsyncSocket::OnReceive");
+	DWORD param = EVENT_RECEIVE;
 	if (m_pWnd != NULL)
 		m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
 
@@ -35,8 +35,9 @@ void CMyAsyncSocket::OnReceive(int nErrorCode)
 void CMyAsyncSocket::OnSend(int nErrorCode)
 {
 	// TODO: 在此添加专用代码和/或调用基类
-
-	DWORD param = 2;
+	//该事件表示可以send了，不是send之后触发
+	printf("CMyAsyncSocket::OnSend");
+	DWORD param = EVENT_SEND;
 	if (m_pWnd != NULL)
 		m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
 
@@ -47,7 +48,7 @@ void CMyAsyncSocket::OnSend(int nErrorCode)
 void CMyAsyncSocket::OnConnect(int nErrorCode)
 {
 	// TODO: 在此添加专用代码和/或调用基类
-
+	printf("CMyAsyncSocket::OnConnect");
 	if (0 != nErrorCode) {
 		switch (nErrorCode)
 		{
@@ -63,7 +64,7 @@ void CMyAsyncSocket::OnConnect(int nErrorCode)
 				_T("used with this socket.\n"));
 			break;
 		case WSAECONNREFUSED:
-			AfxMessageBox(_T("连接被拒绝.\n"));
+			AfxMessageBox(_T("服务器连接被拒绝.\n"));
 			break;
 		case WSAEDESTADDRREQ:
 			AfxMessageBox(_T("A destination address is required.\n"));
@@ -100,16 +101,16 @@ void CMyAsyncSocket::OnConnect(int nErrorCode)
 			break;
 		default:
 			TCHAR szError[256];
-			_stprintf_s(szError, _T("OnConnect error: %d"), nErrorCode);
+			_stprintf_s(szError, _T("服务器连接错误: %d"), nErrorCode);
 			AfxMessageBox(szError);
 			break;
 		}
 	}
-	/*else {
-		DWORD param = 1;
+	else {
+		DWORD param = EVENT_CONNECT;
 		if (m_pWnd != NULL)
 			m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
-	}*/
+	}
 
 	CAsyncSocket::OnConnect(nErrorCode);
 }
@@ -119,7 +120,7 @@ void CMyAsyncSocket::OnClose(int nErrorCode)
 {
 	// TODO: 在此添加专用代码和/或调用基类
 
-	DWORD param = 4;
+	DWORD param = EVENT_CLOSE;
 	if (m_pWnd != NULL)
 		m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
 
