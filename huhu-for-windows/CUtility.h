@@ -11,5 +11,6 @@ public:
 	static LPSTR UTF8ToEncode(LPCSTR str);
 	static LPSTR CStringToChar(CString str);
 	static CString CharToCString(LPSTR str);
+	static CString GetLocalIP();
 };
 

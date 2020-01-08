@@ -35,7 +35,7 @@ protected:
 public:
 	afx_msg void OnBnClickedButtonConnect();
 
-	bool isLogin = false;
+	bool m_bLogin = false;
 	afx_msg void OnBnClickedButtonSend();
 	CSocketManager* m_pCSockMagr;
 protected:

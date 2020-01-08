@@ -90,3 +90,37 @@ CString CUtility::CharToCString(LPSTR str)
 	delete[]buf;
 	return pWideChar;
 }
+
+
+CString CUtility::GetLocalIP()
+{
+	CString ip;
+	/*
+	WSADATA wsaData;
+	int err = WSAStartup(MAKEWORD(2, 0), &wsaData);
+	if (err != 0)
+	{
+		return _T("");
+	}
+	getaddrinfo
+	char szHostName[MAX_PATH] = { 0 };
+	int nRetCode;
+	nRetCode = gethostname(szHostName, sizeof(szHostName));
+
+	char* lpLocalIP;
+	PHOSTENT hostinfo;
+
+	if (nRetCode != 0)
+	{
+		WSACleanup();
+		return _T("");
+	}
+
+	hostinfo = gethostbyname(szHostName);
+	lpLocalIP = inet_ntoa(*(struct in_addr*)*hostinfo->h_addr_list);
+
+	WSACleanup();
+
+	ip.Format(_T("%s"), lpLocalIP);*/
+	return ip;
+}
