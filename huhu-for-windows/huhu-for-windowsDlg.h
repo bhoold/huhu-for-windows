@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "CMyAsyncSocket.h"
+class CSocketManager;
 
 // ChuhuforwindowsDlg 对话框
 class ChuhuforwindowsDlg : public CDialogEx
@@ -35,15 +35,12 @@ protected:
 public:
 	afx_msg void OnBnClickedButtonConnect();
 
-	bool isCreated = false;
-	bool isConnect = false;
 	bool isLogin = false;
-	bool isSend = false;
-	CSocket socket;
-	CString server;
-	CString port;
 	afx_msg void OnBnClickedButtonSend();
-	CMyAsyncSocket *pSocketClient;
+	CSocketManager* m_pCSockMagr;
 protected:
 	afx_msg LRESULT OnMyAsyncSocket(WPARAM wParam, LPARAM lParam);
+public:
+	void Login();
+	void Send(CString msg);
 };

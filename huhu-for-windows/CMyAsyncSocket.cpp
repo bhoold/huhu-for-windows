@@ -3,8 +3,9 @@
 
 #include "stdafx.h"
 #include "huhu-for-windows.h"
-#include "CMyAsyncSocket.h"
 
+#include "CMyAsyncSocket.h"
+#include "CSocketManager.h"
 
 // CMyAsyncSocket
 
@@ -24,9 +25,7 @@ void CMyAsyncSocket::OnReceive(int nErrorCode)
 {
 	// TODO: 在此添加专用代码和/或调用基类
 	printf("CMyAsyncSocket::OnReceive");
-	DWORD param = EVENT_RECEIVE;
-	if (m_pWnd != NULL)
-		m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
+	m_pCSockMagr->Message(EVENT_RECEIVE);
 
 	CAsyncSocket::OnReceive(nErrorCode);
 }
@@ -37,9 +36,7 @@ void CMyAsyncSocket::OnSend(int nErrorCode)
 	// TODO: 在此添加专用代码和/或调用基类
 	//该事件表示可以send了，不是send之后触发
 	printf("CMyAsyncSocket::OnSend");
-	DWORD param = EVENT_SEND;
-	if (m_pWnd != NULL)
-		m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
+	m_pCSockMagr->Message(EVENT_SEND);
 
 	CAsyncSocket::OnSend(nErrorCode);
 }
@@ -107,9 +104,7 @@ void CMyAsyncSocket::OnConnect(int nErrorCode)
 		}
 	}
 	else {
-		DWORD param = EVENT_CONNECT;
-		if (m_pWnd != NULL)
-			m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
+		m_pCSockMagr->Message(EVENT_CONNECT);
 	}
 
 	CAsyncSocket::OnConnect(nErrorCode);
@@ -119,10 +114,7 @@ void CMyAsyncSocket::OnConnect(int nErrorCode)
 void CMyAsyncSocket::OnClose(int nErrorCode)
 {
 	// TODO: 在此添加专用代码和/或调用基类
-
-	DWORD param = EVENT_CLOSE;
-	if (m_pWnd != NULL)
-		m_pWnd->SendMessage(WM_MYASYNCSOCKET, (WPARAM)this, (LPARAM)&param);
+	m_pCSockMagr->Message(EVENT_CLOSE);
 
 	CAsyncSocket::OnClose(nErrorCode);
 }

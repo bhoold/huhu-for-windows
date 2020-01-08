@@ -8,86 +8,12 @@
 #include "afxdialogex.h"
 
 #include "CMyAsyncSocket.h"
+#include "CSocketManager.h"
+#include "CUtility.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-
-char* EncodeToUTF8(const char* mbcsStr)
-{
-	wchar_t* wideStr;
-	char* utf8Str;
-	int charLen;
-
-	charLen = MultiByteToWideChar(CP_UTF8, 0, mbcsStr, -1, NULL, 0);
-	wideStr = (wchar_t*)malloc(sizeof(wchar_t)*charLen);
-	MultiByteToWideChar(CP_ACP, 0, mbcsStr, -1, wideStr, charLen);
-
-	charLen = WideCharToMultiByte(CP_UTF8, 0, wideStr, -1, NULL, 0, NULL, NULL);
-
-	utf8Str = (char*)malloc(charLen);
-
-	WideCharToMultiByte(CP_UTF8, 0, wideStr, -1, utf8Str, charLen, NULL, NULL);
-
-	free(wideStr);
-	return utf8Str;
-
-}
-char* UTF8ToEncode(const char* mbcsStr)
-{
-	wchar_t* wideStr;
-	char* unicodeStr;
-	int charLen;
-
-	charLen = MultiByteToWideChar(CP_UTF8, 0, mbcsStr, -1, NULL, 0);
-	wideStr = (wchar_t*)malloc(sizeof(wchar_t)*charLen);
-	MultiByteToWideChar(CP_UTF8, 0, mbcsStr, -1, wideStr, charLen);
-
-	charLen = WideCharToMultiByte(CP_ACP, 0, wideStr, -1, NULL, 0, NULL, NULL);
-	unicodeStr = (char*)malloc(charLen);
-	WideCharToMultiByte(CP_ACP, 0, wideStr, -1, unicodeStr, charLen, NULL, NULL);
-
-	free(wideStr);
-	return unicodeStr;
-}
-
-char* CStringToChar(CString str)
-{
-	//注意：以下n和len的值大小不同,n是按字符计算的，len是按字节计算的
-	int n = str.GetLength(); // n = 14, len = 18
-	//获取宽字节字符的大小，大小是按字节计算的
-	int len = WideCharToMultiByte(CP_ACP, 0, str, str.GetLength(), NULL, 0, NULL, NULL);
-	//为多字节字符数组申请空间，数组大小为按字节计算的宽字节字节大小
-	char * pFileName = new char[len + 1]; //以字节为单位
-	//宽字节编码转换成多字节编码
-	WideCharToMultiByte(CP_ACP, 0, str, str.GetLength(), pFileName, len, NULL, NULL);
-	pFileName[len + 1] = '\0'; //多字节字符以'\0'结束
-	return pFileName;
-}
-
-CString CharToCString(char* chars)
-{
-	//计算char *数组大小，以字节为单位，一个汉字占两个字节
-	int charLen = strlen(chars);
-	//计算多字节字符的大小，按字符计算。
-	int len = MultiByteToWideChar(CP_ACP, 0, chars, charLen, NULL, 0);
-	//为宽字节字符数组申请空间，数组大小为按字节计算的多字节字符大小
-	TCHAR *buf = new TCHAR[len + 1];
-	//多字节编码转换成宽字节编码
-	MultiByteToWideChar(CP_ACP, 0, chars, charLen, buf, len);
-	buf[len] = '\0'; //添加字符串结尾，注意不是len+1
-	//将TCHAR数组转换为CString
-	CString pWideChar;
-	pWideChar.Append(buf);
-	//删除缓冲区
-	delete[]buf;
-
-	return pWideChar;
-}
-
-
-
 
 
 
@@ -185,7 +111,8 @@ BOOL ChuhuforwindowsDlg::OnInitDialog()
 	GetDlgItem(IDC_EDIT_PORT)->SetWindowTextW(_T("9501"));
 	GetDlgItem(IDC_BUTTON_SEND)->EnableWindow(FALSE);
 
-	pSocketClient = new CMyAsyncSocket;
+	m_pCSockMagr = new CSocketManager;
+	m_pCSockMagr->Init(this);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -249,25 +176,11 @@ void ChuhuforwindowsDlg::OnBnClickedButtonConnect()
 	CString strPort;
 	DWORD nPort;
 
-	GetDlgItem(IDC_EDIT_SERVER)->GetWindowTextW(strServer);
-	GetDlgItem(IDC_EDIT_PORT)->GetWindowTextW(strPort);
+	GetDlgItem(IDC_EDIT_SERVER)->GetWindowText(strServer);
+	GetDlgItem(IDC_EDIT_PORT)->GetWindowText(strPort);
 	nPort = _ttoi(strPort);
 
-	if (!isCreated) {
-		pSocketClient->m_pWnd = this;
-		if (FALSE == pSocketClient->Create()) {
-			CString strError;
-			strError.Format(_T("创建链接失败，错误号: %d"), pSocketClient->GetLastError());
-			GetDlgItem(IDC_RICHEDIT2_CHAT)->SetWindowText(strError);
-			return;
-		}
-		else {
-			isCreated = true;
-		}
-	}
-
-	
-	pSocketClient->Connect(strServer, nPort);
+	m_pCSockMagr->Connect(strServer, nPort);
 
 }
 
@@ -276,16 +189,115 @@ void ChuhuforwindowsDlg::OnBnClickedButtonConnect()
 void ChuhuforwindowsDlg::OnBnClickedButtonSend()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CMyAsyncSocket* pSocket = pSocketClient;
+	CString msg;
+	GetDlgItem(IDC_EDIT_MESSAGE)->GetWindowText(msg);
 
+	if (msg.IsEmpty()) {
+		return;
+	}
+	GetDlgItem(IDC_EDIT_MESSAGE)->SetWindowText(_T(""));
+
+	CString str;
+	str.Format(_T("{message:\"%s\"}"), msg);
+	Send(str);
+}
+
+
+
+afx_msg LRESULT ChuhuforwindowsDlg::OnMyAsyncSocket(WPARAM wParam, LPARAM lParam)
+{
+	CSocketManager* pCSockMagr = (CSocketManager*)wParam;
+	DWORD event = *((DWORD*)(lParam));
+	int recvLen;
+	const int BUF_SIZE = 1024;
+	char buf[BUF_SIZE];
+	switch (event)
+	{
+	case EVENT_CONNECT://connect
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_CONNECT\r\n")));
+
+		break;
+	case EVENT_SEND://send
+	{
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_SEND\r\n")));
+
+		GetDlgItem(IDC_BUTTON_SEND)->EnableWindow();
+		GetDlgItem(IDC_BUTTON_CONNECT)->EnableWindow(FALSE);
+		Login();
+	}
+		break;
+	case EVENT_RECEIVE://receive
+	{
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_RECEIVE\r\n")));
+
+		
+		TCHAR szRecValue[1024] = { 0 };
+		CString strRecev;
+
+		char buff[1024] = {0};
+		m_pCSockMagr->m_pSocket->Receive((void *)buff, 1024);
+		char* newBuff = CUtility::UTF8ToEncode(buff);
+
+		CString str = CUtility::CharToCString(newBuff);
+
+		CTime tm; tm = CTime::GetCurrentTime();
+		strRecev = tm.Format("%Y年%m月%d日 %X\r\n");
+		strRecev.AppendFormat(_T("%s\r\n"), str);
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(strRecev.GetBuffer()));
+
+		if (strRecev.CompareNoCase(_T("bye")) == 0)
+		{
+			m_pCSockMagr->m_pSocket->ShutDown();
+		}
+		
+	}
+		break;
+	case EVENT_CLOSE://close
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
+		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_CLOSE\r\n")));
+		break;
+	default:
+		break;
+	}
+	TCHAR szError[256];
+	_stprintf_s(szError, _T(": %d"), event);
+	TRACE(szError);
+	return 0;
+}
+
+
+void ChuhuforwindowsDlg::Login()
+{
+	// TODO: 在此处添加实现代码.
+		/*
+		{
+		"id":"001",
+		"type":"login",
+		"user":{
+			"account":"haha",
+			"password":"123456"
+			},
+		"platform":{
+			"os":"windows10"
+			"ip":"192.168.1.1"
+			},
+		"version":"0.0.1"
+		}
+		*/
+	CString msg = _T("{login:\"hello\"}");
+	Send(msg);
+}
+
+
+void ChuhuforwindowsDlg::Send(CString msg)
+{
+	// TODO: 在此处添加实现代码.
 	
-	CString  str;
-	GetDlgItemText(IDC_EDIT_MESSAGE, str);
-
-	CString m_sendBuffer;
-	m_sendBuffer.Format(_T("{login:\"%s\"}"), str);
-
-	char* strBuffer = EncodeToUTF8(CStringToChar(m_sendBuffer));
+	char* strBuffer = CUtility::EncodeToUTF8(CUtility::CStringToChar(msg));
 	int nBytesBufferSize = strlen(strBuffer) - 1;
 	int nBytesSent = 0;
 
@@ -293,9 +305,9 @@ void ChuhuforwindowsDlg::OnBnClickedButtonSend()
 	{
 		int dwBytes;
 
-		if ((dwBytes = pSocket->Send((LPCTSTR)strBuffer + nBytesSent, nBytesBufferSize - nBytesSent)) == SOCKET_ERROR)
+		if ((dwBytes = m_pCSockMagr->m_pSocket->Send((LPCTSTR)strBuffer + nBytesSent, nBytesBufferSize - nBytesSent)) == SOCKET_ERROR)
 		{
-			if (GetLastError() == WSAEWOULDBLOCK)
+			if (m_pCSockMagr->m_pSocket->GetLastError() == WSAEWOULDBLOCK)
 			{
 				break;
 			}
@@ -304,7 +316,7 @@ void ChuhuforwindowsDlg::OnBnClickedButtonSend()
 				TCHAR szError[256];
 				_stprintf_s(szError, _T("发送失败: %d"),
 					GetLastError());
-				pSocket->Close();
+				m_pCSockMagr->m_pSocket->Close();
 				AfxMessageBox(szError);
 			}
 		}
@@ -318,108 +330,4 @@ void ChuhuforwindowsDlg::OnBnClickedButtonSend()
 	{
 		nBytesSent = nBytesBufferSize = 0;
 	}
-}
-
-
-
-afx_msg LRESULT ChuhuforwindowsDlg::OnMyAsyncSocket(WPARAM wParam, LPARAM lParam)
-{
-	CMyAsyncSocket* pSocket = (CMyAsyncSocket*)wParam;
-	DWORD param = *((DWORD*)(lParam));
-	int recvLen;
-	const int BUF_SIZE = 1024;
-	char buf[BUF_SIZE];
-	switch (param)
-	{
-	case EVENT_CONNECT://connect
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_CONNECT\r\n")));
-
-		break;
-	case EVENT_SEND://send
-	{
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_SEND\r\n")));
-
-
-		GetDlgItem(IDC_BUTTON_SEND)->EnableWindow();
-
-		CString m_sendBuffer = _T("{login:\"hello\"}");
-		char* strBuffer = EncodeToUTF8(CStringToChar(m_sendBuffer));
-		int nBytesBufferSize = strlen(strBuffer)-1;
-		int nBytesSent = 0;
-
-		while (nBytesSent < nBytesBufferSize)
-		{
-			int dwBytes;
-
-			if ((dwBytes = pSocket->Send((LPCTSTR)strBuffer + nBytesSent, nBytesBufferSize - nBytesSent)) == SOCKET_ERROR)
-			{
-				if (GetLastError() == WSAEWOULDBLOCK)
-				{
-					break;
-				}
-				else
-				{
-					TCHAR szError[256];
-					_stprintf_s(szError, _T("发送失败: %d"),
-						GetLastError());
-					pSocket->Close();
-					AfxMessageBox(szError);
-				}
-			}
-			else
-			{
-				nBytesSent += dwBytes;
-			}
-		}
-
-		if (nBytesSent == nBytesBufferSize)
-		{
-			nBytesSent = nBytesBufferSize = 0;
-		}
-
-	}
-		break;
-	case EVENT_RECEIVE://receive
-	{
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_RECEIVE\r\n")));
-
-
-		TCHAR szRecValue[1024] = { 0 };
-		CString strRecev;
-
-		char buff[1024] = {0};
-		pSocket->Receive((void *)buff, 1024);
-		char* newBuff = UTF8ToEncode(buff);
-
-		CString str = CharToCString(newBuff);
-
-		CTime tm; tm = CTime::GetCurrentTime();
-		strRecev = tm.Format("%Y年%m月%d日 %X\r\n");
-		strRecev.AppendFormat(_T("%s\r\n"), str);
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(strRecev.GetBuffer()));
-
-
-
-		if (strRecev.CompareNoCase(_T("bye")) == 0)
-		{
-			pSocket->ShutDown();
-		}
-
-	}
-		break;
-	case EVENT_CLOSE://close
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
-		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_CLOSE\r\n")));
-		break;
-	default:
-		break;
-	}
-	TCHAR szError[256];
-	_stprintf_s(szError, _T(": %d"), param);
-	TRACE(szError);
-	return 0;
 }
