@@ -183,7 +183,12 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CData.h" />
+    <ClInclude Include="CLoginDlg.h" />
+    <ClInclude Include="CLoginSetupDlg.h" />
+    <ClInclude Include="CMainDlg.h" />
     <ClInclude Include="CMyAsyncSocket.h" />
+    <ClInclude Include="CRegisterDlg.h" />
     <ClInclude Include="CSocketManager.h" />
     <ClInclude Include="CUtility.h" />
     <ClInclude Include="huhu-for-windows.h" />
@@ -193,7 +198,12 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CData.cpp" />
+    <ClCompile Include="CLoginDlg.cpp" />
+    <ClCompile Include="CLoginSetupDlg.cpp" />
+    <ClCompile Include="CMainDlg.cpp" />
     <ClCompile Include="CMyAsyncSocket.cpp" />
+    <ClCompile Include="CRegisterDlg.cpp" />
     <ClCompile Include="CSocketManager.cpp" />
     <ClCompile Include="CUtility.cpp" />
     <ClCompile Include="huhu-for-windows.cpp" />

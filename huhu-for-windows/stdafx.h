@@ -36,6 +36,10 @@
 
 #include <afxsock.h>            // MFC 套接字扩展
 #include <afxsock.h>
+#include <afxcontrolbars.h>
+#include <afxcontrolbars.h>
+#include <afxcontrolbars.h>
+#include <afxcontrolbars.h>
 
 
 

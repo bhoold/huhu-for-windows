@@ -85,3 +85,10 @@ void CSocketManager::Message(DWORD event)
 		break;
 	}
 }
+
+
+void CSocketManager::Close()
+{
+	// TODO: 在此处添加实现代码.
+	m_bConnected = false;
+}

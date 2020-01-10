@@ -11,8 +11,8 @@
 #include "CSocketManager.h"
 #include "CUtility.h"
 
-#include "svn-release-0.5.0/include/json.h"
-#pragma comment(lib, "svn-release-0.5.0/jsoncpp3.lib")
+#include "jsoncpp-release-0.5.0/include/json.h"
+#pragma comment(lib, "jsoncpp-release-0.5.0/jsoncpp3.lib")
 
 
 #ifdef _DEBUG
@@ -341,6 +341,14 @@ afx_msg LRESULT ChuhuforwindowsDlg::OnMyAsyncSocket(WPARAM wParam, LPARAM lParam
 	case EVENT_CLOSE://close
 		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_SETSEL, -1, -1);
 		::SendMessage((*GetDlgItem(IDC_RICHEDIT2_CHAT)), EM_REPLACESEL, 0, (LPARAM)(_T("EVENT_CLOSE\r\n")));
+
+		m_bLogin = false;
+
+		GetDlgItem(IDC_BUTTON_SEND)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_CONNECT)->EnableWindow();
+
+		m_pCSockMagr->Close();
+
 		break;
 	default:
 		break;

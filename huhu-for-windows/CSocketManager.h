@@ -15,5 +15,6 @@ public:
 	void Init(CWnd* pWnd);
 	void Connect(CString strServer, DWORD nPort);
 	void Message(DWORD event);
+	void Close();
 };
 

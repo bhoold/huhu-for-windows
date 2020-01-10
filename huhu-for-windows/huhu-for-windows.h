@@ -9,6 +9,7 @@
 #endif
 
 #include "resource.h"		// 主符号
+#include "CData.h"
 
 
 // ChuhuApp:
@@ -19,7 +20,7 @@ class ChuhuApp : public CWinApp
 {
 public:
 	ChuhuApp();
-
+	CData m_data;
 // 重写
 public:
 	virtual BOOL InitInstance();
@@ -27,6 +28,7 @@ public:
 // 实现
 
 	DECLARE_MESSAGE_MAP()
+
 };
 
 extern ChuhuApp theApp;

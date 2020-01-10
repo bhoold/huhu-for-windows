@@ -5,6 +5,9 @@
 #include "stdafx.h"
 #include "huhu-for-windows.h"
 #include "huhu-for-windowsDlg.h"
+#include "CLoginDlg.h"
+#include "CMainDlg.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -39,6 +42,7 @@ ChuhuApp theApp;
 
 BOOL ChuhuApp::InitInstance()
 {
+	AfxOleInit();
 	/*
 	//利用互斥实现单例进程模式
 	HANDLE   hMutex = ::CreateMutex(NULL, TRUE, _T("huhuapp"));
@@ -93,9 +97,32 @@ BOOL ChuhuApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	ChuhuforwindowsDlg dlg;
+
+	//m_pData = new CData;
+
+
+
+	INT_PTR nResponse;
+
+	CLoginDlg loginDlg;
+	nResponse = loginDlg.DoModal();
+	if (nResponse == IDOK)
+	{
+	}
+	else if (nResponse == IDCANCEL)
+	{
+		PostQuitMessage(0);
+		return FALSE;
+	}
+
+
+
+
+
+	//ChuhuforwindowsDlg dlg;
+	CMainDlg dlg;
 	m_pMainWnd = &dlg;
-	INT_PTR nResponse = dlg.DoModal();
+	nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
 	{
 		// TODO: 在此放置处理何时用
@@ -111,6 +138,13 @@ BOOL ChuhuApp::InitInstance()
 		TRACE(traceAppMsg, 0, "警告: 对话框创建失败，应用程序将意外终止。\n");
 		TRACE(traceAppMsg, 0, "警告: 如果您在对话框上使用 MFC 控件，则无法 #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS。\n");
 	}
+
+
+
+
+
+
+
 
 	// 删除上面创建的 shell 管理器。
 	if (pShellManager != nullptr)
