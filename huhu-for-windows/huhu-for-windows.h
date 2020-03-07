@@ -10,6 +10,7 @@
 
 #include "resource.h"		// 主符号
 #include "CData.h"
+#include "CSocketManager.h"
 
 
 // ChuhuApp:
@@ -20,7 +21,8 @@ class ChuhuApp : public CWinApp
 {
 public:
 	ChuhuApp();
-	CData m_data;
+	CData m_oData;
+	CSocketManager m_oSockMagr;
 // 重写
 public:
 	virtual BOOL InitInstance();

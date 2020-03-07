@@ -11,9 +11,6 @@
 #include "CSocketManager.h"
 #include "CUtility.h"
 
-#include "jsoncpp-release-0.5.0/include/json.h"
-#pragma comment(lib, "jsoncpp-release-0.5.0/jsoncpp3.lib")
-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -55,7 +52,6 @@ END_MESSAGE_MAP()
 
 
 // ChuhuforwindowsDlg 对话框
-
 
 
 ChuhuforwindowsDlg::ChuhuforwindowsDlg(CWnd* pParent /*=nullptr*/)

@@ -18,8 +18,8 @@ CLoginSetupDlg::CLoginSetupDlg(CWnd* pParent /*=nullptr*/)
 	EnableActiveAccessibility();
 #endif
 
-	m_strServer = theApp.m_data.m_strServer;
-	m_nPort = theApp.m_data.m_nPort;
+	m_strServer = theApp.m_oData.m_strServer;
+	m_nPort = theApp.m_oData.m_nPort;
 }
 
 CLoginSetupDlg::~CLoginSetupDlg()
@@ -57,10 +57,10 @@ void CLoginSetupDlg::OnBnClickedOk()
 	GetDlgItemText(IDC_EDIT_PORT, strPort);
 
 	if (!strServer.IsEmpty()) {
-		theApp.m_data.m_strServer = strServer;
+		theApp.m_oData.m_strServer = strServer;
 	}
 	if (!strPort.IsEmpty()) {
-		theApp.m_data.m_nPort = _ttoi(strPort);
+		theApp.m_oData.m_nPort = _ttoi(strPort);
 	}
 
 	CDialogEx::OnOK();

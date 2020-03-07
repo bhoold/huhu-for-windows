@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "CRegisterDlg.h"
 #include "CLoginSetupDlg.h"
+#include "CUtility.h"
 // CLoginDlg 对话框
 
 IMPLEMENT_DYNAMIC(CLoginDlg, CDialogEx)
@@ -44,7 +45,7 @@ END_MESSAGE_MAP()
 void CLoginDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CDialogEx::OnOK();
+	//CDialogEx::OnOK();
 
 	/*
 	CRegisterDlg dlg;
@@ -54,6 +55,16 @@ void CLoginDlg::OnBnClickedOk()
 	pDlg->Create(IDD_REGISTER_DIALOG, this);
 	pDlg->ShowWindow(SW_SHOW);
 	*/
+
+	CString strAccount;
+	CString strPassword;
+	GetDlgItemText(IDC_EDIT_ACCOUNT, strAccount);
+	GetDlgItemText(IDC_EDIT_PASSWORD, strPassword);
+
+	CString msg;
+	msg.Format(_T("{\"type\":\"login\",\"user\":{\"account\":\"%s\",\"password\":\"%s\"},\"client\":{\"os\":\"windows10\",\"version\":\"0.0.1\"}}"),
+		strAccount, strPassword);
+	theApp.m_oSockMagr.Send(this, msg);
 }
 
 
@@ -85,17 +96,7 @@ void CLoginDlg::OnStnClickedStaticReg()
 
 	CRegisterDlg dlg;
 	INT_PTR nResponse = dlg.DoModal();
-	if (nResponse == IDOK)
-	{
-		// TODO: 在此放置处理何时用
-		ShowWindow(SW_SHOW);
-	}
-	else
-	{
-		// TODO: 在此放置处理何时用
-		//PostQuitMessage(0);
-		ShowWindow(SW_SHOW);
-	}
+	ShowWindow(SW_SHOW);
 }
 
 

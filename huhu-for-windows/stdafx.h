@@ -58,3 +58,14 @@
 #endif
 
 
+
+struct MsgTask { //消息任务
+	CWnd* pWnd;
+	CString msg;
+};
+//_T("{\"type\":\"login\",\"user\":{\"account\":\"%s\",\"password\":\"%s\"},\"client\":{\"os\":\"windows10\",\"version\":\"0.0.1\"}}")
+struct MyStruct
+{
+	CString type;
+
+};
